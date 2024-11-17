@@ -1,8 +1,5 @@
 
 import torch
-from diffusers import StableDiffusionImg2ImgPipeline, StableDiffusionXLImg2ImgPipeline
-
-
 from WED.model.eunms import Model_Type, Scheduler_Type
 # from src.schedulers.euler_scheduler import MyEulerAncestralDiscreteScheduler
 # from src.schedulers.lcm_scheduler import MyLCMScheduler
