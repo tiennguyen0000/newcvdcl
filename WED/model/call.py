@@ -3,7 +3,7 @@ import torch
 from WED.model.eunms import Model_Type, Scheduler_Type
 from WED.model.Utils.enums_utils import get_pipes
 from WED.model.config import RunConfig
-from WED.schemas.genI_schemas import base64_to_image
+from WED.schemas.genI_schemas import base64_to_image, TextInput
 from WED.model.main import run
 
 
