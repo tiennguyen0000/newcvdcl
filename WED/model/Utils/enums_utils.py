@@ -4,7 +4,7 @@ from WED.model.eunms import Model_Type, Scheduler_Type
 # from src.schedulers.euler_scheduler import MyEulerAncestralDiscreteScheduler
 # from src.schedulers.lcm_scheduler import MyLCMScheduler
 from WED.model.Scheduler.DDIM_Scheduler import MyDDIMScheduler
-from WED.model.Scheduler.LCM_schedule import MyLCMScheduler
+# from WED.model.Scheduler.LCM_schedule import MyLCMScheduler
 from WED.model.Pieline.SDXL_invert_pipeline import SDXLDDIMPipeline
 from WED.model.Pieline.SDXL_pipeline import StableDiffusionXLDecompositionPipeline
 
@@ -15,8 +15,8 @@ def scheduler_type_to_class(scheduler_type):
         return MyDDIMScheduler
     # elif scheduler_type == Scheduler_Type.EULER:
     #     return MyEulerAncestralDiscreteScheduler
-    elif scheduler_type == Scheduler_Type.LCM:
-        return MyLCMScheduler
+    # elif scheduler_type == Scheduler_Type.LCM:
+    #     return MyLCMScheduler
     else:
         raise ValueError("Unknown scheduler type")
 
@@ -51,18 +51,18 @@ def model_type_to_class(model_type):
 def model_type_to_model_name(model_type):
     if model_type == Model_Type.SDXL:
         return "stabilityai/stable-diffusion-xl-base-1.0"
-    elif model_type == Model_Type.SDXL_Turbo:
-        return "stabilityai/sdxl-turbo"
-    elif model_type == Model_Type.LCM_SDXL:
-        return "stabilityai/stable-diffusion-xl-base-1.0"
-    elif model_type == Model_Type.SD15:
-        return "runwayml/stable-diffusion-v1-5"
-    elif model_type == Model_Type.SD14:
-        return "CompVis/stable-diffusion-v1-4"
-    elif model_type == Model_Type.SD21:
-        return "stabilityai/stable-diffusion-2-1"
-    elif model_type == Model_Type.SD21_Turbo:
-        return "stabilityai/sd-turbo"
+    # elif model_type == Model_Type.SDXL_Turbo:
+    #     return "stabilityai/sdxl-turbo"
+    # elif model_type == Model_Type.LCM_SDXL:
+    #     return "stabilityai/stable-diffusion-xl-base-1.0"
+    # elif model_type == Model_Type.SD15:
+    #     return "runwayml/stable-diffusion-v1-5"
+    # elif model_type == Model_Type.SD14:
+    #     return "CompVis/stable-diffusion-v1-4"
+    # elif model_type == Model_Type.SD21:
+    #     return "stabilityai/stable-diffusion-2-1"
+    # elif model_type == Model_Type.SD21_Turbo:
+    #     return "stabilityai/sd-turbo"
     else:
         raise ValueError("Unknown model type")
 
