@@ -49,8 +49,8 @@ def crdeimg(scal, omega=3, t_exit=15):
                                 added_cond_kwargs_ref=other_kwargs[1],
                                 t_exit=t_exit, # t_exit=15 for "009698.jpg", t_exit=25 for "Arknight.jpg"
                                 ).images[0]
-    rec_image.resize(original_shape).save("new_sdxlcat_3.jpg")
-    return rec_image
+    
+    return rec_image.resize(original_shape)
 
 def genI(txt: TextInput):
     from WED.model.Pipeline.TTI import pipelineT2i, generator
