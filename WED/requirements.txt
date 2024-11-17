@@ -3,3 +3,5 @@ torchvision==0.17.1
 python-multipart==0.0.9
 huggingface_hub==0.23.5
 pyrallis==0.3.1
+accelerate==0.25.0
+bitsandbytes==0.43.0
