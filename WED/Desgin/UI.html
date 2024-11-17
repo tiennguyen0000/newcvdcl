@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text to Image</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container text-center mt-5">
+        <h1 class="mb-4">Text to Image</h1>
+        
+        <!-- Khung hình ảnh tải lên -->
+        <div class="row mb-4">
+            
+
+            <!-- Khung hình ảnh sinh ra -->
+            <div class="col-md-6">
+                <h4>GEN</h4>
+                <div class="image-container">
+                    <img id="generated-image" src="" alt="Generator image" class="img-fluid" style="display: none;" />
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <textarea id="text-input" class="form-control mb-3" rows="1" placeholder="Nhập văn bản để sinh ảnh..."></textarea>
+            <button id="generate" class="btn btn-success mb-3">Sinh ảnh từ văn bản</button>
+            <button id="reset_gen" class="btn btn-secondary mb-3">Đặt lại</button>
+        </div>
+        <div 
+        <div class="row mb-4">
+            <div class="col-md-6 text-center">
+              <h4>UP</h4>
+              <div class="image-container">
+                <img id="uploaded-image" src="" alt="UP" class="img-fluid" style="display: none;" />
+              </div>
+              <input type="file" id="upload" accept="image/*" class="form-control-file mb-4">
+            </div>
+            <div class="col-md-6 text-center">
+              <h4>INDE</h4>
+              <div class="image-container">
+                <img id="inde-image" src="" alt="inde image" class="img-fluid" style="display: none;" />
+              </div>
+            </div>
+          </div>
+          
+        <div class="btn-group mb-2">
+            
+            <input type="text" id="promt-input" class="form-control mb-2" placeholder=".promt.." style="width: 200px; ">
+            <input type="text" id="promtfw-input" class="form-control mb-2" placeholder=".promt_fw.." style="width: 200px;">
+        </div>
+        <div class="mt-2">
+            <button id="increase" class="btn btn-success mb-3">increace</button>
+            <button id="decrease" class="btn btn-success mb-3">decreace</button>
+            <button id="reset_inde" class="btn btn-secondary mb-3">Reset</button>
+        </div>
+        <!-- New section to display the value of x -->
+        
+    </div>
+
+    <script src="javaS.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+torch==2.2.1
+torchvision==0.17.1
+python-multipart==0.0.9
+huggingface_hub==0.23.5
+# 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
