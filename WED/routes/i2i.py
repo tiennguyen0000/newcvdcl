@@ -12,7 +12,7 @@ router = APIRouter()
 device = 'cuda'
 model_type = Model_Type.SDXL
 scheduler_type = Scheduler_Type.DDIM
-pipe_inversion, pipe_inference = get_pipes(model_type, scheduler_typedevice=device)
+pipe_inversion, pipe_inference = get_pipes(model_type, scheduler_type, device=device)
 @router.post('/increase')
 def predict(scal : tai_rps):
     response = crdeimg(scal, pipe_inversion, pipe_inference, omega=3)
