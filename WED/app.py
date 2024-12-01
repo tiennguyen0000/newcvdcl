@@ -7,7 +7,7 @@ from WED.middleware import  setup_cors
 from WED.routes.base import router
 import nest_asyncio
 import uvicorn
-import ngrok
+from pyngrok import ngrok
 
 app = FastAPI()
 setup_cors(app)
