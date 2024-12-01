@@ -61,7 +61,7 @@ def crdeimg(scal,
                             reverse_editing_direction = reverse_editing_direction,
                             t_exit = t_exit, # t_exit=15 for "009698.jpg", t_exit=25 for "Arknight.jpg"
                             ).images[0]
-    rec_image = rec_image.images[0]
+    # rec_image = rec_image.images[0]
     # mask = mask.images[0]
     # mask.save("../mask.jpg")
     return rec_image.resize((1024, int(1024 * original_shape[1] / original_shape[0])))
