@@ -9,13 +9,13 @@ router = APIRouter()
 
 @router.post('/increase')
 def predict(scal : tai_rps):
-    response = crdeimg(scal, omega=3, t_exit=15)
+    response = crdeimg(scal, omega=3)
 
     return image_to_base64(response)
 
 @router.post('/decrease')
 def predictcx(scal : tai_rps):
-    response = crdeimg(scal, omega=-3, t_exit=15)
+    response = crdeimg(scal, omega=-3)
     # image = Image.open('/kaggle/input/dsgssdd/images.jpg')   
     return image_to_base64(response)
     # return 0
