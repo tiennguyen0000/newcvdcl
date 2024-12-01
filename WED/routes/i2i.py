@@ -4,6 +4,9 @@ sys.path.append(str(Path(__file__).parent))
 from fastapi import APIRouter
 from WED.schemas.genI_schemas import tai_rps, TextInput, image_to_base64
 from WED.model.call import crdeimg
+from WED.model.Utils.enums_utils import get_pipes
+from WED.model.eunms import Model_Type, Scheduler_Type
+
 
 router = APIRouter()
 device = 'cuda'
