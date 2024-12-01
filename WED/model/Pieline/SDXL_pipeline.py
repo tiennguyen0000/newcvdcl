@@ -25,270 +25,270 @@ def degrade_proportionally(i, max_value=1, num_inference_steps=49,  gamma=0):
     v = max_value * (1 - i / num_inference_steps)**gamma
     return v if (v>0) else v*0.3
 
-class LeditsAttentionStore:
-    @staticmethod
-    def get_empty_store():
-        return {"down_cross": [], "mid_cross": [], "up_cross": [], "down_self": [], "mid_self": [], "up_self": []}
+# class LeditsAttentionStore:
+#     @staticmethod
+#     def get_empty_store():
+#         return {"down_cross": [], "mid_cross": [], "up_cross": [], "down_self": [], "mid_self": [], "up_self": []}
 
-    def __call__(self, attn, is_cross: bool, place_in_unet: str, editing_prompts, PnP=False):
-        # attn.shape = batch_size * head_size, seq_len query, seq_len_key
-        if attn.shape[1] <= self.max_size:
-            bs = 1 + int(PnP) + editing_prompts
-            skip = 2 if PnP else 1  # skip PnP & unconditional
-            attn = torch.stack(attn.split(self.batch_size)).permute(1, 0, 2, 3)
-            source_batch_size = int(attn.shape[1] // bs)
-            self.forward(attn[:, skip * source_batch_size :], is_cross, place_in_unet)
+#     def __call__(self, attn, is_cross: bool, place_in_unet: str, editing_prompts, PnP=False):
+#         # attn.shape = batch_size * head_size, seq_len query, seq_len_key
+#         if attn.shape[1] <= self.max_size:
+#             bs = 1 + int(PnP) + editing_prompts
+#             skip = 2 if PnP else 1  # skip PnP & unconditional
+#             attn = torch.stack(attn.split(self.batch_size)).permute(1, 0, 2, 3)
+#             source_batch_size = int(attn.shape[1] // bs)
+#             self.forward(attn[:, skip * source_batch_size :], is_cross, place_in_unet)
 
-    def forward(self, attn, is_cross: bool, place_in_unet: str):
-        key = f"{place_in_unet}_{'cross' if is_cross else 'self'}"
+#     def forward(self, attn, is_cross: bool, place_in_unet: str):
+#         key = f"{place_in_unet}_{'cross' if is_cross else 'self'}"
 
-        self.step_store[key].append(attn)
+#         self.step_store[key].append(attn)
 
-    def between_steps(self, store_step=True):
-        if store_step:
-            if self.average:
-                if len(self.attention_store) == 0:
-                    self.attention_store = self.step_store
-                else:
-                    for key in self.attention_store:
-                        for i in range(len(self.attention_store[key])):
-                            self.attention_store[key][i] += self.step_store[key][i]
-            else:
-                if len(self.attention_store) == 0:
-                    self.attention_store = [self.step_store]
-                else:
-                    self.attention_store.append(self.step_store)
+#     def between_steps(self, store_step=True):
+#         if store_step:
+#             if self.average:
+#                 if len(self.attention_store) == 0:
+#                     self.attention_store = self.step_store
+#                 else:
+#                     for key in self.attention_store:
+#                         for i in range(len(self.attention_store[key])):
+#                             self.attention_store[key][i] += self.step_store[key][i]
+#             else:
+#                 if len(self.attention_store) == 0:
+#                     self.attention_store = [self.step_store]
+#                 else:
+#                     self.attention_store.append(self.step_store)
 
-            self.cur_step += 1
-        self.step_store = self.get_empty_store()
+#             self.cur_step += 1
+#         self.step_store = self.get_empty_store()
 
-    def get_attention(self, step: int):
-        if self.average:
-            attention = {
-                key: [item / self.cur_step for item in self.attention_store[key]] for key in self.attention_store
-            }
-        else:
-            assert step is not None
-            attention = self.attention_store[step]
-        return attention
+#     def get_attention(self, step: int):
+#         if self.average:
+#             attention = {
+#                 key: [item / self.cur_step for item in self.attention_store[key]] for key in self.attention_store
+#             }
+#         else:
+#             assert step is not None
+#             attention = self.attention_store[step]
+#         return attention
 
-    def aggregate_attention(
-        self, attention_maps, prompts, res: Union[int, Tuple[int]], from_where: List[str], is_cross: bool, select: int
-    ):
-        out = [[] for x in range(self.batch_size)]
-        if isinstance(res, int):
-            num_pixels = res**2
-            resolution = (res, res)
-        else:
-            num_pixels = res[0] * res[1]
-            resolution = res[:2]
+#     def aggregate_attention(
+#         self, attention_maps, prompts, res: Union[int, Tuple[int]], from_where: List[str], is_cross: bool, select: int
+#     ):
+#         out = [[] for x in range(self.batch_size)]
+#         if isinstance(res, int):
+#             num_pixels = res**2
+#             resolution = (res, res)
+#         else:
+#             num_pixels = res[0] * res[1]
+#             resolution = res[:2]
 
-        for location in from_where:
-            for bs_item in attention_maps[f"{location}_{'cross' if is_cross else 'self'}"]:
-                for batch, item in enumerate(bs_item):
-                    if item.shape[1] == num_pixels:
-                        cross_maps = item.reshape(len(prompts), -1, *resolution, item.shape[-1])[select]
-                        out[batch].append(cross_maps)
+#         for location in from_where:
+#             for bs_item in attention_maps[f"{location}_{'cross' if is_cross else 'self'}"]:
+#                 for batch, item in enumerate(bs_item):
+#                     if item.shape[1] == num_pixels:
+#                         cross_maps = item.reshape(len(prompts), -1, *resolution, item.shape[-1])[select]
+#                         out[batch].append(cross_maps)
 
-        out = torch.stack([torch.cat(x, dim=0) for x in out])
-        # average over heads
-        out = out.sum(1) / out.shape[1]
-        return out
+#         out = torch.stack([torch.cat(x, dim=0) for x in out])
+#         # average over heads
+#         out = out.sum(1) / out.shape[1]
+#         return out
 
-    def __init__(self, average: bool, batch_size=1, max_resolution=16, max_size: int = None):
-        self.step_store = self.get_empty_store()
-        self.attention_store = []
-        self.cur_step = 0
-        self.average = average
-        self.batch_size = batch_size
-        if max_size is None:
-            self.max_size = max_resolution**2
-        elif max_size is not None and max_resolution is None:
-            self.max_size = max_size
-        else:
-            raise ValueError("Only allowed to set one of max_resolution or max_size")
+#     def __init__(self, average: bool, batch_size=1, max_resolution=16, max_size: int = None):
+#         self.step_store = self.get_empty_store()
+#         self.attention_store = []
+#         self.cur_step = 0
+#         self.average = average
+#         self.batch_size = batch_size
+#         if max_size is None:
+#             self.max_size = max_resolution**2
+#         elif max_size is not None and max_resolution is None:
+#             self.max_size = max_size
+#         else:
+#             raise ValueError("Only allowed to set one of max_resolution or max_size")
 
-import math
-# Copied from diffusers.pipelines.ledits_pp.pipeline_leditspp_stable_diffusion.LeditsGaussianSmoothing
-class LeditsGaussianSmoothing:
-    def __init__(self, device):
-        kernel_size = [3, 3]
-        sigma = [0.5, 0.5]
+# import math
+# # Copied from diffusers.pipelines.ledits_pp.pipeline_leditspp_stable_diffusion.LeditsGaussianSmoothing
+# class LeditsGaussianSmoothing:
+#     def __init__(self, device):
+#         kernel_size = [3, 3]
+#         sigma = [0.5, 0.5]
 
-        # The gaussian kernel is the product of the gaussian function of each dimension.
-        kernel = 1
-        meshgrids = torch.meshgrid([torch.arange(size, dtype=torch.float32) for size in kernel_size])
-        for size, std, mgrid in zip(kernel_size, sigma, meshgrids):
-            mean = (size - 1) / 2
-            kernel *= 1 / (std * math.sqrt(2 * math.pi)) * torch.exp(-(((mgrid - mean) / (2 * std)) ** 2))
+#         # The gaussian kernel is the product of the gaussian function of each dimension.
+#         kernel = 1
+#         meshgrids = torch.meshgrid([torch.arange(size, dtype=torch.float32) for size in kernel_size])
+#         for size, std, mgrid in zip(kernel_size, sigma, meshgrids):
+#             mean = (size - 1) / 2
+#             kernel *= 1 / (std * math.sqrt(2 * math.pi)) * torch.exp(-(((mgrid - mean) / (2 * std)) ** 2))
 
-        # Make sure sum of values in gaussian kernel equals 1.
-        kernel = kernel / torch.sum(kernel)
+#         # Make sure sum of values in gaussian kernel equals 1.
+#         kernel = kernel / torch.sum(kernel)
 
-        # Reshape to depthwise convolutional weight
-        kernel = kernel.view(1, 1, *kernel.size())
-        kernel = kernel.repeat(1, *[1] * (kernel.dim() - 1))
+#         # Reshape to depthwise convolutional weight
+#         kernel = kernel.view(1, 1, *kernel.size())
+#         kernel = kernel.repeat(1, *[1] * (kernel.dim() - 1))
 
-        self.weight = kernel.to(device)
+#         self.weight = kernel.to(device)
 
-    def __call__(self, input):
-        """
-        Arguments:
-        Apply gaussian filter to input.
-            input (torch.Tensor): Input to apply gaussian filter on.
-        Returns:
-            filtered (torch.Tensor): Filtered output.
-        """
-        return F.conv2d(input, weight=self.weight.to(input.dtype))
+#     def __call__(self, input):
+#         """
+#         Arguments:
+#         Apply gaussian filter to input.
+#             input (torch.Tensor): Input to apply gaussian filter on.
+#         Returns:
+#             filtered (torch.Tensor): Filtered output.
+#         """
+#         return F.conv2d(input, weight=self.weight.to(input.dtype))
 
-# Copied from diffusers.pipelines.ledits_pp.pipeline_leditspp_stable_diffusion.LEDITSCrossAttnProcessor
-class LEDITSCrossAttnProcessor:
-    def __init__(self, attention_store, place_in_unet, pnp, editing_prompts):
-        self.attnstore = attention_store
-        self.place_in_unet = place_in_unet
-        self.editing_prompts = editing_prompts
-        self.pnp = pnp
+# # Copied from diffusers.pipelines.ledits_pp.pipeline_leditspp_stable_diffusion.LEDITSCrossAttnProcessor
+# class LEDITSCrossAttnProcessor:
+#     def __init__(self, attention_store, place_in_unet, pnp, editing_prompts):
+#         self.attnstore = attention_store
+#         self.place_in_unet = place_in_unet
+#         self.editing_prompts = editing_prompts
+#         self.pnp = pnp
 
-    def __call__(
-        self,
-        attn: Attention,
-        hidden_states,
-        encoder_hidden_states,
-        attention_mask=None,
-        temb=None,
-    ):
-        batch_size, sequence_length, _ = (
-            hidden_states.shape if encoder_hidden_states is None else encoder_hidden_states.shape
-        )
-        attention_mask = attn.prepare_attention_mask(attention_mask, sequence_length, batch_size)
+#     def __call__(
+#         self,
+#         attn: Attention,
+#         hidden_states,
+#         encoder_hidden_states,
+#         attention_mask=None,
+#         temb=None,
+#     ):
+#         batch_size, sequence_length, _ = (
+#             hidden_states.shape if encoder_hidden_states is None else encoder_hidden_states.shape
+#         )
+#         attention_mask = attn.prepare_attention_mask(attention_mask, sequence_length, batch_size)
 
-        query = attn.to_q(hidden_states)
+#         query = attn.to_q(hidden_states)
 
-        if encoder_hidden_states is None:
-            encoder_hidden_states = hidden_states
-        elif attn.norm_cross:
-            encoder_hidden_states = attn.norm_encoder_hidden_states(encoder_hidden_states)
+#         if encoder_hidden_states is None:
+#             encoder_hidden_states = hidden_states
+#         elif attn.norm_cross:
+#             encoder_hidden_states = attn.norm_encoder_hidden_states(encoder_hidden_states)
 
-        key = attn.to_k(encoder_hidden_states)
-        value = attn.to_v(encoder_hidden_states)
+#         key = attn.to_k(encoder_hidden_states)
+#         value = attn.to_v(encoder_hidden_states)
 
-        query = attn.head_to_batch_dim(query)
-        key = attn.head_to_batch_dim(key)
-        value = attn.head_to_batch_dim(value)
+#         query = attn.head_to_batch_dim(query)
+#         key = attn.head_to_batch_dim(key)
+#         value = attn.head_to_batch_dim(value)
 
-        attention_probs = attn.get_attention_scores(query, key, attention_mask)
-        self.attnstore(
-            attention_probs,
-            is_cross=True,
-            place_in_unet=self.place_in_unet,
-            editing_prompts=self.editing_prompts,
-            PnP=self.pnp,
-        )
+#         attention_probs = attn.get_attention_scores(query, key, attention_mask)
+#         self.attnstore(
+#             attention_probs,
+#             is_cross=True,
+#             place_in_unet=self.place_in_unet,
+#             editing_prompts=self.editing_prompts,
+#             PnP=self.pnp,
+#         )
 
-        hidden_states = torch.bmm(attention_probs, value)
-        hidden_states = attn.batch_to_head_dim(hidden_states)
+#         hidden_states = torch.bmm(attention_probs, value)
+#         hidden_states = attn.batch_to_head_dim(hidden_states)
 
-        # linear proj
-        hidden_states = attn.to_out[0](hidden_states)
-        # dropout
-        hidden_states = attn.to_out[1](hidden_states)
+#         # linear proj
+#         hidden_states = attn.to_out[0](hidden_states)
+#         # dropout
+#         hidden_states = attn.to_out[1](hidden_states)
 
-        hidden_states = hidden_states / attn.rescale_output_factor
-        return hidden_states
+#         hidden_states = hidden_states / attn.rescale_output_factor
+#         return hidden_states
 
 class StableDiffusionXLDecompositionPipeline(StableDiffusionXLImg2ImgPipeline):
     
 
     
     
-    def prepare_text_embeddings(
-        self,
-        prompt_embeds,
-        negative_prompt_embeds,
-        batch_size,
-        num_images_per_prompt,
-        device
-    ):
-        # 1. Validate input dimensions
-        if prompt_embeds.shape[-2] != 640:  # Expected sequence length
-            # Reshape or truncate to correct size
-            prompt_embeds = prompt_embeds[:, :640, :]
-            if negative_prompt_embeds is not None:
-                negative_prompt_embeds = negative_prompt_embeds[:, :640, :]
+    # def prepare_text_embeddings(
+    #     self,
+    #     prompt_embeds,
+    #     negative_prompt_embeds,
+    #     batch_size,
+    #     num_images_per_prompt,
+    #     device
+    # ):
+    #     # 1. Validate input dimensions
+    #     if prompt_embeds.shape[-2] != 640:  # Expected sequence length
+    #         # Reshape or truncate to correct size
+    #         prompt_embeds = prompt_embeds[:, :640, :]
+    #         if negative_prompt_embeds is not None:
+    #             negative_prompt_embeds = negative_prompt_embeds[:, :640, :]
         
-        # 2. Ensure correct batch size
-        prompt_embeds = prompt_embeds.repeat(batch_size * num_images_per_prompt, 1, 1)
-        if negative_prompt_embeds is not None:
-            negative_prompt_embeds = negative_prompt_embeds.repeat(batch_size * num_images_per_prompt, 1, 1)
+    #     # 2. Ensure correct batch size
+    #     prompt_embeds = prompt_embeds.repeat(batch_size * num_images_per_prompt, 1, 1)
+    #     if negative_prompt_embeds is not None:
+    #         negative_prompt_embeds = negative_prompt_embeds.repeat(batch_size * num_images_per_prompt, 1, 1)
 
-        # 3. Move to correct device and dtype
-        prompt_embeds = prompt_embeds.to(device=device, dtype=self.unet.dtype)
-        if negative_prompt_embeds is not None:
-            negative_prompt_embeds = negative_prompt_embeds.to(device=device, dtype=self.unet.dtype)
+    #     # 3. Move to correct device and dtype
+    #     prompt_embeds = prompt_embeds.to(device=device, dtype=self.unet.dtype)
+    #     if negative_prompt_embeds is not None:
+    #         negative_prompt_embeds = negative_prompt_embeds.to(device=device, dtype=self.unet.dtype)
 
-        # 4. Validate final shapes
-        expected_shape = (batch_size * num_images_per_prompt, 640, -1)
-        if prompt_embeds.shape[:2] != expected_shape[:2]:
-            raise ValueError(
-                f"Unexpected prompt_embeds shape: {prompt_embeds.shape}. "
-                f"Expected: {expected_shape}"
-            )
+    #     # 4. Validate final shapes
+    #     expected_shape = (batch_size * num_images_per_prompt, 640, -1)
+    #     if prompt_embeds.shape[:2] != expected_shape[:2]:
+    #         raise ValueError(
+    #             f"Unexpected prompt_embeds shape: {prompt_embeds.shape}. "
+    #             f"Expected: {expected_shape}"
+    #         )
 
-        return prompt_embeds, negative_prompt_embeds
+    #     return prompt_embeds, negative_prompt_embeds
     
-    def prepare_unet(self, attention_store, PnP: bool = False):
-        attn_procs = {}
-        for name in self.unet.attn_processors.keys():
-            if name.startswith("mid_block"):
-                place_in_unet = "mid"
-            elif name.startswith("up_blocks"):
-                place_in_unet = "up"
-            elif name.startswith("down_blocks"):
-                place_in_unet = "down"
-            else:
-                continue
+    # def prepare_unet(self, attention_store, PnP: bool = False):
+    #     attn_procs = {}
+    #     for name in self.unet.attn_processors.keys():
+    #         if name.startswith("mid_block"):
+    #             place_in_unet = "mid"
+    #         elif name.startswith("up_blocks"):
+    #             place_in_unet = "up"
+    #         elif name.startswith("down_blocks"):
+    #             place_in_unet = "down"
+    #         else:
+    #             continue
 
-            if "attn2" in name and place_in_unet != "mid":
-                attn_procs[name] = LEDITSCrossAttnProcessor(
-                    attention_store=attention_store,
-                    place_in_unet=place_in_unet,
-                    pnp=PnP,
-                    editing_prompts=self.enabled_editing_prompts,
-                )
-            else:
-                attn_procs[name] = AttnProcessor()
+    #         if "attn2" in name and place_in_unet != "mid":
+    #             attn_procs[name] = LEDITSCrossAttnProcessor(
+    #                 attention_store=attention_store,
+    #                 place_in_unet=place_in_unet,
+    #                 pnp=PnP,
+    #                 editing_prompts=self.enabled_editing_prompts,
+    #             )
+    #         else:
+    #             attn_procs[name] = AttnProcessor()
 
-        self.unet.set_attn_processor(attn_procs)
+    #     self.unet.set_attn_processor(attn_procs)
     
-    def get_guidance_scale_embedding(
-        self, w: torch.Tensor, embedding_dim: int = 512, dtype: torch.dtype = torch.float32
-    ) -> torch.Tensor:
-        """
-        See https://github.com/google-research/vdm/blob/dc27b98a554f65cdc654b800da5aa1846545d41b/model_vdm.py#L298
+    # def get_guidance_scale_embedding(
+    #     self, w: torch.Tensor, embedding_dim: int = 512, dtype: torch.dtype = torch.float32
+    # ) -> torch.Tensor:
+    #     """
+    #     See https://github.com/google-research/vdm/blob/dc27b98a554f65cdc654b800da5aa1846545d41b/model_vdm.py#L298
 
-        Args:
-            w (`torch.Tensor`):
-                Generate embedding vectors with a specified guidance scale to subsequently enrich timestep embeddings.
-            embedding_dim (`int`, *optional*, defaults to 512):
-                Dimension of the embeddings to generate.
-            dtype (`torch.dtype`, *optional*, defaults to `torch.float32`):
-                Data type of the generated embeddings.
+    #     Args:
+    #         w (`torch.Tensor`):
+    #             Generate embedding vectors with a specified guidance scale to subsequently enrich timestep embeddings.
+    #         embedding_dim (`int`, *optional*, defaults to 512):
+    #             Dimension of the embeddings to generate.
+    #         dtype (`torch.dtype`, *optional*, defaults to `torch.float32`):
+    #             Data type of the generated embeddings.
 
-        Returns:
-            `torch.Tensor`: Embedding vectors with shape `(len(w), embedding_dim)`.
-        """
-        assert len(w.shape) == 1
-        w = w * 1000.0
+    #     Returns:
+    #         `torch.Tensor`: Embedding vectors with shape `(len(w), embedding_dim)`.
+    #     """
+    #     assert len(w.shape) == 1
+    #     w = w * 1000.0
 
-        half_dim = embedding_dim // 2
-        emb = torch.log(torch.tensor(10000.0)) / (half_dim - 1)
-        emb = torch.exp(torch.arange(half_dim, dtype=dtype) * -emb)
-        emb = w.to(dtype)[:, None] * emb[None, :]
-        emb = torch.cat([torch.sin(emb), torch.cos(emb)], dim=1)
-        if embedding_dim % 2 == 1:  # zero pad
-            emb = torch.nn.functional.pad(emb, (0, 1))
-        assert emb.shape == (w.shape[0], embedding_dim)
-        return emb
+    #     half_dim = embedding_dim // 2
+    #     emb = torch.log(torch.tensor(10000.0)) / (half_dim - 1)
+    #     emb = torch.exp(torch.arange(half_dim, dtype=dtype) * -emb)
+    #     emb = w.to(dtype)[:, None] * emb[None, :]
+    #     emb = torch.cat([torch.sin(emb), torch.cos(emb)], dim=1)
+    #     if embedding_dim % 2 == 1:  # zero pad
+    #         emb = torch.nn.functional.pad(emb, (0, 1))
+    #     assert emb.shape == (w.shape[0], embedding_dim)
+    #     return emb
     
     @torch.no_grad()
     def __call__(
@@ -390,7 +390,7 @@ class StableDiffusionXLDecompositionPipeline(StableDiffusionXLImg2ImgPipeline):
         else:
             batch_size = prompt_embeds.shape[0]
         
-        self.smoothing = LeditsGaussianSmoothing(self.device)
+        # self.smoothing = LeditsGaussianSmoothing(self.device)
         device = self._execution_device
         self.enabled_editing_prompts = len(prompt)
 
