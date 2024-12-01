@@ -6,14 +6,15 @@ from diffusers.pipelines.stable_diffusion.pipeline_stable_diffusion import (
     PipelineImageInput,
     rescale_noise_cfg,
 )
-import torch.nn.functional as F
 
-from diffusers.models.attention_processor import AttnProcessor
-from diffusers.models.attention import Attention
 from diffusers import StableDiffusionXLImg2ImgPipeline
 from diffusers.utils import is_torch_xla_available
 from diffusers.pipelines.stable_diffusion_xl.pipeline_output import StableDiffusionXLPipelineOutput
 
+## this is for mask
+# import torch.nn.functional as F
+# from diffusers.models.attention_processor import AttnProcessor
+# from diffusers.models.attention import Attention
 if is_torch_xla_available():
     import torch_xla.core.xla_model as xm
     XLA_AVAILABLE = True
@@ -449,16 +450,16 @@ class StableDiffusionXLDecompositionPipeline(StableDiffusionXLImg2ImgPipeline):
         )
         batch_sizeI = image.shape[0]
 
-        self.attention_store = LeditsAttentionStore(
-                average=store_averaged_over_steps,
-                batch_size=batch_sizeI,
-                max_size=(latents.shape[-2] / 4.0) * (latents.shape[-1] / 4.0),
-                max_resolution=None,
-            )
+        # self.attention_store = LeditsAttentionStore(
+        #         average=store_averaged_over_steps,
+        #         batch_size=batch_sizeI,
+        #         max_size=(latents.shape[-2] / 4.0) * (latents.shape[-1] / 4.0),
+        #         max_resolution=None,
+        #     )
         
-        self.prepare_unet(self.attention_store)
-        resolution = latents.shape[-2:]
-        att_res = (int(resolution[0] / 4), int(resolution[1] / 4))
+        # self.prepare_unet(self.attention_store)
+        # resolution = latents.shape[-2:]
+        # att_res = (int(resolution[0] / 4), int(resolution[1] / 4))
         # 7. Prepare extra step kwargs.
         extra_step_kwargs = self.prepare_extra_step_kwargs(generator, eta)
 
@@ -583,19 +584,19 @@ class StableDiffusionXLDecompositionPipeline(StableDiffusionXLImg2ImgPipeline):
                
                 #############
                 ###############
-                noise_pred_out = noise_pred.chunk(1 + self.enabled_editing_prompts)  # [b,4, 64, 64]
-                noise_pred_uncond = noise_pred_out[0]
-                noise_pred_edit_concepts = noise_pred_out[1:]
+                # noise_pred_out = noise_pred.chunk(1 + self.enabled_editing_prompts)  # [b,4, 64, 64]
+                # noise_pred_uncond = noise_pred_out[0]
+                # noise_pred_edit_concepts = noise_pred_out[1:]
                 
 
-                noise_guidance_edit = torch.zeros(
-                    noise_pred_uncond.shape,
-                    device=self.device,
-                    dtype=noise_pred_uncond.dtype,
-                )
-                self.sem_guidance = []
-                if not hasattr(self, "activation_mask"):
-                    self.activation_mask = {}  # Tạo dạng dictionary
+                # noise_guidance_edit = torch.zeros(
+                #     noise_pred_uncond.shape,
+                #     device=self.device,
+                #     dtype=noise_pred_uncond.dtype,
+                # )
+                # self.sem_guidance = []
+                # if not hasattr(self, "activation_mask"):
+                #     self.activation_mask = {}  # Tạo dạng dictionary
 
                 # print("svsbs: ", noise_pred_edit_concepts, noise_pred.shape, self.enabled_editing_prompts, timesteps)
 
@@ -603,100 +604,100 @@ class StableDiffusionXLDecompositionPipeline(StableDiffusionXLImg2ImgPipeline):
 
                 # if self.sem_guidance is None:
                 #     self.sem_guidance = torch.zeros((len(timesteps), *noise_pred_uncond.shape))
+#----------------------------------------------------------------------
+                # for c in range(len(prompt)):
+                #     noise_guidance_edit_tmp = noise_pred*0.2
 
-                for c in range(len(prompt)):
-                    noise_guidance_edit_tmp = noise_pred*0.2
+                #     if reverse_editing_direction[c]:
+                #         noise_guidance_edit_tmp = noise_guidance_edit_tmp * -1
 
-                    if reverse_editing_direction[c]:
-                        noise_guidance_edit_tmp = noise_guidance_edit_tmp * -1
+                #     noise_guidance_edit_tmp = noise_guidance_edit_tmp * edit_guidance_scale[c]
+                #     ######### attn mask
+                #     out = self.attention_store.aggregate_attention(
+                #         attention_maps=self.attention_store.step_store,
+                #         prompts=self.text_cross_attention_maps,
+                #         res=att_res,
+                #         from_where=["up", "down"],
+                #         is_cross=True,
+                #         select=self.text_cross_attention_maps.index(prompt[c]),
+                #     )
+                #     # Sử dụng toàn bộ attention map
+                #     attn_map = out[:, :, :, 1:]
+                #     # Trung bình trên tất cả các token
+                #     attn_map = torch.sum(attn_map, dim=3)
+                #     attn_map = F.pad(attn_map.unsqueeze(1), (1, 1, 1, 1), mode="reflect")
+                #     attn_map = self.smoothing(attn_map).squeeze(1)
 
-                    noise_guidance_edit_tmp = noise_guidance_edit_tmp * edit_guidance_scale[c]
-                    ######### attn mask
-                    out = self.attention_store.aggregate_attention(
-                        attention_maps=self.attention_store.step_store,
-                        prompts=self.text_cross_attention_maps,
-                        res=att_res,
-                        from_where=["up", "down"],
-                        is_cross=True,
-                        select=self.text_cross_attention_maps.index(prompt[c]),
-                    )
-                    # Sử dụng toàn bộ attention map
-                    attn_map = out[:, :, :, 1:]
-                    # Trung bình trên tất cả các token
-                    attn_map = torch.sum(attn_map, dim=3)
-                    attn_map = F.pad(attn_map.unsqueeze(1), (1, 1, 1, 1), mode="reflect")
-                    attn_map = self.smoothing(attn_map).squeeze(1)
+                #     # torch.quantile function expects float32
+                #     if attn_map.dtype == torch.float32:
+                #         tmp = torch.quantile(attn_map.flatten(start_dim=1), edit_threshold[c], dim=1)
+                #     else:
+                #         tmp = torch.quantile(
+                #             attn_map.flatten(start_dim=1).to(torch.float32), edit_threshold[c], dim=1
+                #         ).to(attn_map.dtype)
+                #     attn_mask = torch.where(
+                #         attn_map >= tmp.unsqueeze(1).unsqueeze(1).repeat(1, *att_res), 1.0, 0.0
+                #     )
 
-                    # torch.quantile function expects float32
-                    if attn_map.dtype == torch.float32:
-                        tmp = torch.quantile(attn_map.flatten(start_dim=1), edit_threshold[c], dim=1)
-                    else:
-                        tmp = torch.quantile(
-                            attn_map.flatten(start_dim=1).to(torch.float32), edit_threshold[c], dim=1
-                        ).to(attn_map.dtype)
-                    attn_mask = torch.where(
-                        attn_map >= tmp.unsqueeze(1).unsqueeze(1).repeat(1, *att_res), 1.0, 0.0
-                    )
-
-                    # resolution must match latent space dimension
-                    attn_mask = F.interpolate(
-                        attn_mask.unsqueeze(1),
-                        noise_guidance_edit_tmp.shape[-2:],  # 64,64
-                    ).repeat(1, 4, 1, 1)
-                    self.activation_mask[i, c] = attn_mask.detach().cpu()
+                #     # resolution must match latent space dimension
+                #     attn_mask = F.interpolate(
+                #         attn_mask.unsqueeze(1),
+                #         noise_guidance_edit_tmp.shape[-2:],  # 64,64
+                #     ).repeat(1, 4, 1, 1)
+                #     self.activation_mask[i, c] = attn_mask.detach().cpu()
                     
-                    ########### intersect_mask
-                    noise_guidance_edit_tmp_quantile = torch.abs(noise_guidance_edit_tmp)
-                    noise_guidance_edit_tmp_quantile = torch.sum(
-                        noise_guidance_edit_tmp_quantile, dim=1, keepdim=True
-                    )
-                    noise_guidance_edit_tmp_quantile = noise_guidance_edit_tmp_quantile.repeat(
-                        1, self.unet.config.in_channels, 1, 1
-                    )
+                #     ########### intersect_mask
+                #     noise_guidance_edit_tmp_quantile = torch.abs(noise_guidance_edit_tmp)
+                #     noise_guidance_edit_tmp_quantile = torch.sum(
+                #         noise_guidance_edit_tmp_quantile, dim=1, keepdim=True
+                #     )
+                #     noise_guidance_edit_tmp_quantile = noise_guidance_edit_tmp_quantile.repeat(
+                #         1, self.unet.config.in_channels, 1, 1
+                #     )
 
-                    # torch.quantile function expects float32
-                    if noise_guidance_edit_tmp_quantile.dtype == torch.float32:
-                        tmp = torch.quantile(
-                            noise_guidance_edit_tmp_quantile.flatten(start_dim=2),
-                            edit_threshold[c],
-                            dim=2,
-                            keepdim=False,
-                        )
-                    else:
-                        tmp = torch.quantile(
-                            noise_guidance_edit_tmp_quantile.flatten(start_dim=2).to(torch.float32),
-                            edit_threshold[c],
-                            dim=2,
-                            keepdim=False,
-                        ).to(noise_guidance_edit_tmp_quantile.dtype)
+                #     # torch.quantile function expects float32
+                #     if noise_guidance_edit_tmp_quantile.dtype == torch.float32:
+                #         tmp = torch.quantile(
+                #             noise_guidance_edit_tmp_quantile.flatten(start_dim=2),
+                #             edit_threshold[c],
+                #             dim=2,
+                #             keepdim=False,
+                #         )
+                #     else:
+                #         tmp = torch.quantile(
+                #             noise_guidance_edit_tmp_quantile.flatten(start_dim=2).to(torch.float32),
+                #             edit_threshold[c],
+                #             dim=2,
+                #             keepdim=False,
+                #         ).to(noise_guidance_edit_tmp_quantile.dtype)
 
-                    intersect_mask = (
-                        torch.where(
-                            noise_guidance_edit_tmp_quantile >= tmp[:, :, None, None],
-                            torch.ones_like(noise_guidance_edit_tmp),
-                            torch.zeros_like(noise_guidance_edit_tmp),
-                        )
-                        * attn_mask # attn mask
-                    )
-                    print(intersect_mask.sum(), noise_guidance_edit_tmp.sum(), c)
+                #     intersect_mask = (
+                #         torch.where(
+                #             noise_guidance_edit_tmp_quantile >= tmp[:, :, None, None],
+                #             torch.ones_like(noise_guidance_edit_tmp),
+                #             torch.zeros_like(noise_guidance_edit_tmp),
+                #         )
+                #         * attn_mask # attn mask
+                #     )
+                #     print(intersect_mask.sum(), noise_guidance_edit_tmp.sum(), c)
 
-                    self.activation_mask[i, c] = intersect_mask.detach().cpu()
+                #     self.activation_mask[i, c] = intersect_mask.detach().cpu()
 
-                    noise_guidance_edit_tmp = noise_guidance_edit_tmp * intersect_mask
+                #     noise_guidance_edit_tmp = noise_guidance_edit_tmp * intersect_mask
                     
-                    mask = intersect_mask
+                #     mask = intersect_mask
                     
-                    noise_guidance_edit += noise_guidance_edit_tmp
+                #     noise_guidance_edit += noise_guidance_edit_tmp
 
-                self.sem_guidance.append(noise_guidance_edit.detach().cpu())
+                # self.sem_guidance.append(noise_guidance_edit.detach().cpu())
                 
 
                 ################
                 ###########
-
+#----------------------------------------------------------------------
                 # Combine masks
-                print ("   ",scaling_factor)
-                scaling_factor = scaling_factor * noise_guidance_edit
+                # print ("   ",scaling_factor)
+                # scaling_factor = scaling_factor * noise_guidance_edit
                 #print (scaling_factor)
                 # print('------------------')
                 
@@ -774,30 +775,30 @@ class StableDiffusionXLDecompositionPipeline(StableDiffusionXLImg2ImgPipeline):
             if needs_upcasting:
                 self.upcast_vae()
                 latents = latents.to(next(iter(self.vae.post_quant_conv.parameters())).dtype)
-                mask = mask.to(next(iter(self.vae.post_quant_conv.parameters())).dtype)
+                # mask = mask.to(next(iter(self.vae.post_quant_conv.parameters())).dtype)
 
             image = self.vae.decode(latents / self.vae.config.scaling_factor, return_dict=False)[0]
-            mask = self.vae.decode(mask / self.vae.config.scaling_factor, return_dict=False)[0]
+            # mask = self.vae.decode(mask / self.vae.config.scaling_factor, return_dict=False)[0]
 
             # cast back to fp16 if needed
             if needs_upcasting:
                 self.vae.to(dtype=torch.float16)
         else:
             image = latents
-            return StableDiffusionXLPipelineOutput(images=image), StableDiffusionXLPipelineOutput(images=mask)
+            return StableDiffusionXLPipelineOutput(images=image)  #, StableDiffusionXLPipelineOutput(images=mask)
 
         # apply watermark if available
         if self.watermark is not None:
             image = self.watermark.apply_watermark(image)
-            mask = self.watermark.apply_watermark(mask)
+            # mask = self.watermark.apply_watermark(mask)
 
         image = self.image_processor.postprocess(image, output_type=output_type)
-        mask = self.image_processor.postprocess(mask, output_type=output_type)
+        # mask = self.image_processor.postprocess(mask, output_type=output_type)
 
         # Offload all models
         self.maybe_free_model_hooks()
 
         if not return_dict:
-            return (image, mask,)
+            return (image,)
 
-        return StableDiffusionXLPipelineOutput(images=image), StableDiffusionXLDecompositionPipeline(images=mask)
+        return StableDiffusionXLPipelineOutput(images=image)  #, StableDiffusionXLDecompositionPipeline(images=mask)
