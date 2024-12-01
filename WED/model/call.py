@@ -11,16 +11,19 @@ def add_interrupt_attribute(self):
     self.interrupt = False  # Set to False by default
 
 def crdeimg(scal,
+            pipe_inversion, 
+            pipe_inference,
             omega = 0,
             edit_threshold = [0.9],
             edit_guidance_scale = [10],
             reverse_editing_direction = [False, False, False],
-            t_exit = 0):
+            t_exit = 55,
+            ):
     
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     model_type = Model_Type.SDXL
     scheduler_type = Scheduler_Type.DDIM
-    pipe_inversion, pipe_inference = get_pipes(model_type, scheduler_type, device=device)
+    # pipe_inversion, pipe_inference = get_pipes(model_type, scheduler_type, device=device)
     input_image = base64_to_image(scal.img_base64)
     original_shape = input_image.size
     input_image = input_image.resize((1024, 1024))
@@ -43,8 +46,8 @@ def crdeimg(scal,
 
 
     pipe_inference.__class__.interrupt
-    if t_exit == 0:
-        t_exit = scal.num_ts // 3
+    # if t_exit == 0:
+    #     t_exit = scal.num_ts // 3
     
     rec_image = pipe_inference(image = inv_latent,
                             prompt = scal.prompt_fw,
