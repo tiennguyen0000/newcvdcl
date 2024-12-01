@@ -51,9 +51,10 @@ document.getElementById('generate').addEventListener('click', function() {
 
 // increase and decrease
 async function query_inde(base64Image, promt, promt_fw, scale) {
+    
     // Gửi request và nhận kết quả trả về
     const response = await fetch(
-        `https://ed9e-104-198-6-20.ngrok-free.app/i2i/${scale}`,
+        `https://c4cf-34-106-255-115.ngrok-free.app/i2i/${scale}`,
         {   
             method: "POST",
             headers: {
@@ -61,9 +62,9 @@ async function query_inde(base64Image, promt, promt_fw, scale) {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                promt: promt,
-                promt_fw: promt_fw,
-                img_base64: base64Image
+                prompt: promt,
+                prompt_fw: promt_fw,
+                img_base64: base64Image,
             }),
         }
     );
@@ -92,8 +93,52 @@ document.getElementById('increase').addEventListener('click', function() {
     base64Image.then(base64 => {
         query_inde(base64, promt, promt_fw, scale)
         .then(data => {
-            console.log(data.promt, data.promt_fw, "here");
-            img_base64 = data.img_base64;
+            
+            img_base64 = data;
+           
+            // Hiển thị ảnh kết quả
+            const imgElement = document.getElementById('inde-image');
+            imgElement.src = `data:image/jpeg;base64,${img_base64}`;
+            imgElement.style.display = 'block';
+        })
+        .catch(error => {
+            console.error("Error:", error);
+        });
+    });
+
+    function toBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result.split(",")[1]); // Lấy base64 sau dấu phẩy
+            reader.onerror = (error) => reject(error);
+            reader.readAsDataURL(file);
+        });
+    }
+});
+
+document.getElementById('decrease').addEventListener('click', function() {
+    const uploadedImage = document.getElementById('upload');
+
+    const file = uploadedImage.files[0];
+    if (!file) {
+        alert("Please select an image first!");
+        return;
+    }
+
+    // Chuyển ảnh sang base64
+    const base64Image = toBase64(file);
+    const promt = document.getElementById('promt-input').value;
+    const promt_fw = document.getElementById('promtfw-input').value;
+
+    // console.log(promt, promt_fw, base64Image.json);
+    // Gọi API
+    scale = "decrease";
+    base64Image.then(base64 => {
+        query_inde(base64, promt, promt_fw, scale)
+        .then(data => {
+       
+            img_base64 = data;
+
 
             // Hiển thị ảnh kết quả
             const imgElement = document.getElementById('inde-image');
@@ -116,40 +161,7 @@ document.getElementById('increase').addEventListener('click', function() {
 });
 
 
-document.getElementById('decrease').addEventListener('click', function() {
-    const uploadedImage = document.getElementById('uploaded-image');
 
-    const file = uploadedImage.files[0];
-    if (!file) {
-        alert("Please select an image first!");
-        return;
-    }
-    // data input
-    const base64Image = toBase64(file);
-    const promt = document.getElementById('promt-input').value;
-    const promt_fw = document.getElementById('promtfw-input').value;
-
-    // fetch api
-    scale = "decrease";
-    query_inde(base64Image, promt, promt_fw)
-    .then(response => response.json())
-    .then(data => {
-        img_base64 = data.image_data;
-        const imgElement = document.getElementById('inde-image');
-        imgElement.src = `data:image/jpeg;base64,${img_base64}`;
-        imgElement.style.display = 'block';
-    })
-
-    function toBase64(file) {
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result.split(",")[1]); // Lấy base64 sau dấu phẩy
-          reader.onerror = (error) => reject(error);
-          reader.readAsDataURL(file);
-        });
-    }
-
-});
 
 // reset
 document.getElementById('reset_gen').addEventListener('click', function() {
