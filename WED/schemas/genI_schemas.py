@@ -7,8 +7,8 @@ class TextInput(BaseModel):
     txt: str
     
 class tai_rps(BaseModel):
-  promt : str
-  promt_fw : str
+  prompt : str
+  prompt_fw : str
   img_base64 : str
 
 # support input
