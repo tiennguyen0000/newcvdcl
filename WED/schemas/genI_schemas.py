@@ -16,7 +16,7 @@ def image_to_base64(img: Image.Image, format: str = "JPEG") -> str:
     buffered = BytesIO()
     img.save(buffered, format=format)
     img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
-    return {'img_base64': img_str}
+    return img_str
 
 def base64_to_image(base64_str: str) -> Image.Image:
 
