@@ -46,7 +46,7 @@ def crdeimg(scal,
     if t_exit == 0:
         t_exit = scal.num_ts // 3
     
-    rec_image, mask = pipe_inference(image = inv_latent,
+    rec_image = pipe_inference(image = inv_latent,
                             prompt = scal.prompt_fw,
                             denoising_start=0.0,
                             num_inference_steps = config.num_inference_steps,
@@ -62,8 +62,8 @@ def crdeimg(scal,
                             t_exit = t_exit, # t_exit=15 for "009698.jpg", t_exit=25 for "Arknight.jpg"
                             ).images[0]
     rec_image = rec_image.images[0]
-    mask = mask.images[0]
-    mask.save("../mask.jpg")
+    # mask = mask.images[0]
+    # mask.save("../mask.jpg")
     return rec_image.resize((1024, int(1024 * original_shape[1] / original_shape[0])))
 
 def genI(txt: TextInput):
