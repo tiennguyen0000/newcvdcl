@@ -50,7 +50,7 @@ document.getElementById('generate').addEventListener('click', function() {
 
 
 // increase and decrease
-async function query_inde(base64Image, promt, promt_fw, scale) {
+async function query_inde(base64Image, promt, promt_fw, numrs, numts, scale) {
     
     // Gửi request và nhận kết quả trả về
     const response = await fetch(
@@ -64,6 +64,8 @@ async function query_inde(base64Image, promt, promt_fw, scale) {
             body: JSON.stringify({
                 prompt: promt,
                 prompt_fw: promt_fw,
+                numrs: numrs,
+                numts: numts,
                 img_base64: base64Image,
             }),
         }
@@ -87,11 +89,13 @@ document.getElementById('increase').addEventListener('click', function() {
     const base64Image = toBase64(file);
     const promt = document.getElementById('promt-input').value;
     const promt_fw = document.getElementById('promtfw-input').value;
+    const numts = document.getElementById('num_timestep').value;
+    const numrs = document.getElementById('num_renoise_step').value;
 
     // Gọi API
     scale = "increase";
     base64Image.then(base64 => {
-        query_inde(base64, promt, promt_fw, scale)
+        query_inde(base64, promt, promt_fw, numts, numrs, scale)
         .then(data => {
             
             img_base64 = data;
@@ -129,12 +133,14 @@ document.getElementById('decrease').addEventListener('click', function() {
     const base64Image = toBase64(file);
     const promt = document.getElementById('promt-input').value;
     const promt_fw = document.getElementById('promtfw-input').value;
+    const numts = document.getElementById('num_timestep').value;
+    const numrs = document.getElementById('num_renoise_step').value;
 
     // console.log(promt, promt_fw, base64Image.json);
     // Gọi API
     scale = "decrease";
     base64Image.then(base64 => {
-        query_inde(base64, promt, promt_fw, scale)
+        query_inde(base64, promt, promt_fw, numts, numrs, scale)
         .then(data => {
        
             img_base64 = data;
