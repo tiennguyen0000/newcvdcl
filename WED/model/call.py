@@ -34,7 +34,7 @@ def crdeimg(scal,
                         num_inversion_steps = int(scal.numts),
                         num_renoise_steps = int(scal.numrs),
                         scheduler_type = scheduler_type,
-                        perform_noise_correction = True,
+                        perform_noise_correction = False,
                         seed = 7865)
     
     _, inv_latent, _, all_latents, other_kwargs = run(input_image,
@@ -42,7 +42,7 @@ def crdeimg(scal,
                                           config,
                                           pipe_inversion=pipe_inversion,
                                           pipe_inference=pipe_inference,
-                                          do_reconstruction=True)
+                                          do_reconstruction=False)
 
 
     pipe_inference.__class__.interrupt
