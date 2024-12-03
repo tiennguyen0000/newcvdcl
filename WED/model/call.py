@@ -30,11 +30,11 @@ def crdeimg(scal,
     prompt = scal.prompt # 'smile' for "009698.jpg", 'anime' for "Arknight.jpg"
 
     config = RunConfig(model_type = model_type,
-                        num_inference_steps = 20,
-                        num_inversion_steps = 20,
-                        num_renoise_steps = 1,
+                        num_inference_steps = int(scal.numts),
+                        num_inversion_steps = int(scal.numts),
+                        num_renoise_steps = int(scal.numrs),
                         scheduler_type = scheduler_type,
-                        perform_noise_correction = False,
+                        perform_noise_correction = True,
                         seed = 7865)
     
     _, inv_latent, _, all_latents, other_kwargs = run(input_image,
@@ -42,12 +42,12 @@ def crdeimg(scal,
                                           config,
                                           pipe_inversion=pipe_inversion,
                                           pipe_inference=pipe_inference,
-                                          do_reconstruction=False)
+                                          do_reconstruction=True)
 
 
     pipe_inference.__class__.interrupt
-    # if t_exit == 0:
-    #     t_exit = scal.num_ts // 3
+    if t_exit == 0:
+        t_exit = scal.numts // 3
     
     rec_image = pipe_inference(image = inv_latent,
                             prompt = scal.prompt_fw,
@@ -70,5 +70,5 @@ def crdeimg(scal,
     return rec_image.resize((1024, int(1024 * original_shape[1] / original_shape[0])))
 
 def genI(txt: TextInput):
-    from WED.model.Pipeline.TTI import pipelineT2i, generator
+    from WED.model.Pieline.TTI import pipelineT2i, generator
     return pipelineT2i(txt.txt, generator=generator).images[0]
