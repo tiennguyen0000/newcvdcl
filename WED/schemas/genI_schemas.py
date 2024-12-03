@@ -9,6 +9,8 @@ class TextInput(BaseModel):
 class tai_rps(BaseModel):
   prompt : str
   prompt_fw : str
+  numrs: str
+  numts: str
   img_base64 : str
 
 # support input
