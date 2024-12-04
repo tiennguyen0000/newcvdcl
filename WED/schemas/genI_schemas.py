@@ -11,6 +11,7 @@ class tai_rps(BaseModel):
   prompt_fw : str
   numrs: str
   numts: str
+  t_exit: str
   img_base64 : str
 
 # support input
