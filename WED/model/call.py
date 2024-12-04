@@ -16,8 +16,7 @@ def crdeimg(scal,
             omega = 0,
             edit_threshold = [0.9],
             edit_guidance_scale = [10],
-            reverse_editing_direction = [False, False, False],
-            t_exit = 55,
+            reverse_editing_direction = [False, False, False]
             ):
     
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -46,8 +45,8 @@ def crdeimg(scal,
 
 
     pipe_inference.__class__.interrupt
-    if t_exit == 0:
-        t_exit = scal.numts // 3
+    # if t_exit == 0:
+    #     t_exit = scal.numts // 3
     
     rec_image = pipe_inference(image = inv_latent,
                             prompt = scal.prompt_fw,
@@ -62,7 +61,7 @@ def crdeimg(scal,
                             edit_threshold = edit_threshold,
                             edit_guidance_scale = edit_guidance_scale,
                             reverse_editing_direction = reverse_editing_direction,
-                            t_exit = t_exit, # t_exit=15 for "009698.jpg", t_exit=25 for "Arknight.jpg"
+                            t_exit = int(scal.t_exit), # t_exit=15 for "009698.jpg", t_exit=25 for "Arknight.jpg"
                             ).images[0]
     # rec_image = rec_image.images[0]
     # mask = mask.images[0]
