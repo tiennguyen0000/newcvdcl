@@ -7,8 +7,7 @@ from WED.schemas.genI_schemas import base64_to_image, TextInput
 from WED.model.main import run
 
 
-def add_interrupt_attribute(self):
-    self.interrupt = False  # Set to False by default
+  # Set to False by default
 
 def crdeimg(scal,
             pipe_inversion, 
@@ -43,7 +42,8 @@ def crdeimg(scal,
                                           pipe_inference=pipe_inference,
                                           do_reconstruction=False)
 
-
+    def add_interrupt_attribute(self):
+        self.interrupt = False
     pipe_inference.__class__.interrupt
     # if t_exit == 0:
     #     t_exit = scal.numts // 3
