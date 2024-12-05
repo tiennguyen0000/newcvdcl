@@ -2,10 +2,12 @@ import pyrallis
 import torch
 from PIL import Image
 from diffusers.utils.torch_utils import randn_tensor
-from WED.model.config import RunConfig
 
-def create_noise_list(length, generator=None):
-    img_size = (1024, 1024)
+from WED.model.config import RunConfig
+from WED.model.Utils.enums_utils import model_type_to_size, is_stochastic
+
+def create_noise_list(model_type, length, generator=None):
+    img_size = model_type_to_size(model_type)
     VQAE_SCALE = 8
     latents_size = (1, 4, img_size[0] // VQAE_SCALE, img_size[1] // VQAE_SCALE)
     return [randn_tensor(latents_size, dtype=torch.float16, device=torch.device("cuda:0"), generator=generator) for i in range(length)]
@@ -26,6 +28,12 @@ def run(init_image: Image,
         do_reconstruction = True):
     
     generator = torch.Generator().manual_seed(cfg.seed)
+
+    if is_stochastic(cfg.scheduler_type):
+        if latents is None:
+            noise = create_noise_list(cfg.model_type, cfg.num_inversion_steps, generator=generator)
+        pipe_inversion.scheduler.set_noise_list(noise)
+        pipe_inference.scheduler.set_noise_list(noise)
 
     pipe_inversion.cfg = cfg
     pipe_inference.cfg = cfg
@@ -63,6 +71,9 @@ def run(init_image: Image,
                             gamma=0,
                             inv_latents=all_latents,
                             prompt_embeds_ref=other_kwargs[0],
+                            edit_threshold= [0.9, 0.85],
+                            edit_guidance_scale= [5.0],
+                            reverse_editing_direction= [False],
                             added_cond_kwargs_ref=other_kwargs[1]).images[0]
     else:
         img = None
