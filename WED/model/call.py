@@ -19,7 +19,7 @@ def crdeimg(scal,
             ):
     
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    model_type = Model_Type.SDXL_Turbo
+    model_type = Model_Type.SDXL
     scheduler_type = Scheduler_Type.DDIM
     # pipe_inversion, pipe_inference = get_pipes(model_type, scheduler_type, device=device)
     input_image = base64_to_image(scal.img_base64)
