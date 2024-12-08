@@ -24,7 +24,7 @@ def crdeimg(scal,
     # pipe_inversion, pipe_inference = get_pipes(model_type, scheduler_type, device=device)
     input_image = base64_to_image(scal.img_base64)
     original_shape = input_image.size
-    input_image = input_image.resize((512, 512))
+    input_image = input_image.resize((1024, 1024))
     prompt = scal.prompt # 'smile' for "009698.jpg", 'anime' for "Arknight.jpg"
 
     config = RunConfig(model_type = model_type,
