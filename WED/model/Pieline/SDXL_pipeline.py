@@ -22,7 +22,8 @@ else:
     XLA_AVAILABLE = False
 
 def degrade_proportionally(i, max_value=1, num_inference_steps=49,  gamma=0):
-    return max(0, max_value * (1 - i / num_inference_steps)**gamma)
+    v = max_value * (1 - i / num_inference_steps)**gamma
+    return v if (v>0) else v*0.1
 
 # class LeditsAttentionStore:
 #     @staticmethod
@@ -713,8 +714,8 @@ class StableDiffusionXLDecompositionPipeline(StableDiffusionXLImg2ImgPipeline):
                         added_cond_kwargs=added_cond_kwargs_ref,
                         return_dict=False,
                     )[0]
-                    # noise_pred = (noise_pred + scaling_factor * (noise_pred_recon - noise_pred))
-                    noise_pred = noise_pred_recon
+                    noise_pred = (noise_pred + scaling_factor * (noise_pred_recon - noise_pred))
+                    # noise_pred = noise_pred_recon
                 else:
                     noise_pred_fwd = self.unet(
                         latent_model_input,
@@ -727,8 +728,8 @@ class StableDiffusionXLDecompositionPipeline(StableDiffusionXLImg2ImgPipeline):
                     )[0]
                     x = noise_pred
                     noise_pred = noise_pred + scaling_factor * (noise_pred_fwd - noise_pred) 
-                    if (scaling_factor != 0):
-                        noise_pred = noise_pred + 2 * scaling_factor * x
+                    # if (scaling_factor != 0):
+                    #     noise_pred = noise_pred + 2 * scaling_factor * x
 
                 # perform guidance
                 if self.do_classifier_free_guidance:
