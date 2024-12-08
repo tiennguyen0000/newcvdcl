@@ -719,7 +719,7 @@ class StableDiffusionXLDecompositionPipeline(StableDiffusionXLImg2ImgPipeline):
                     noise_pred_fwd = self.unet(
                     latent_model_input,
                     t,
-                    encoder_hidden_states=prompt_embeds_ref, # c prompt
+                    encoder_hidden_states=prompt_embeds, # c prompt
                     timestep_cond=timestep_cond,
                     cross_attention_kwargs=self.cross_attention_kwargs,
                     added_cond_kwargs=added_cond_kwargs_ref,
