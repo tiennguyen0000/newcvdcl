@@ -10,7 +10,7 @@ from WED.model.eunms import Model_Type, Scheduler_Type
 
 router = APIRouter()
 device = 'cuda'
-model_type = Model_Type.SDXL_Turbo
+model_type = Model_Type.SDXL
 scheduler_type = Scheduler_Type.DDIM
 pipe_inversion, pipe_inference = get_pipes(model_type, scheduler_type, device=device)
 @router.post('/increase')
