@@ -22,8 +22,7 @@ else:
     XLA_AVAILABLE = False
 
 def degrade_proportionally(i, max_value=1, num_inference_steps=49,  gamma=0):
-    v = max_value * (1 - i / num_inference_steps)**gamma
-    return v if (v>0) else v*0.3
+    return max(0, max_value * (1 - i / num_inference_steps)**gamma)
 
 # class LeditsAttentionStore:
 #     @staticmethod
@@ -698,7 +697,7 @@ class StableDiffusionXLDecompositionPipeline(StableDiffusionXLImg2ImgPipeline):
                 # Combine masks
                 # print ("   ",scaling_factor)
                 # scaling_factor = scaling_factor * noise_guidance_edit
-                #print (scaling_factor)
+                # print (scaling_factor)
                 # print('------------------')
                 
 
@@ -714,16 +713,17 @@ class StableDiffusionXLDecompositionPipeline(StableDiffusionXLImg2ImgPipeline):
                         added_cond_kwargs=added_cond_kwargs_ref,
                         return_dict=False,
                     )[0]
-                    noise_pred = (noise_pred + scaling_factor * (noise_pred_recon - noise_pred))
+                    # noise_pred = (noise_pred + scaling_factor * (noise_pred_recon - noise_pred))
+                    noise_pred = noise_pred_recon
                 else:
                     noise_pred_fwd = self.unet(
-                    latent_model_input,
-                    t,
-                    encoder_hidden_states=prompt_embeds, # c prompt
-                    timestep_cond=timestep_cond,
-                    cross_attention_kwargs=self.cross_attention_kwargs,
-                    added_cond_kwargs=added_cond_kwargs_ref,
-                    return_dict=False,
+                        latent_model_input,
+                        t,
+                        encoder_hidden_states=prompt_embeds_ref, # c prompt
+                        timestep_cond=timestep_cond,
+                        cross_attention_kwargs=self.cross_attention_kwargs,
+                        added_cond_kwargs=added_cond_kwargs_ref,
+                        return_dict=False,
                     )[0]
                     noise_pred = noise_pred + scaling_factor * (noise_pred_fwd - noise_pred) 
 
